@@ -1,0 +1,41 @@
+/* AetherTab Animations - 13 named keyframes, all GPU-composited */
+@keyframes void-breath { 0%,100%{opacity:.55;transform:scale(1)} 50%{opacity:.85;transform:scale(1.08)} }
+@keyframes particle-drift { 0%{transform:translateY(0) translateX(0);opacity:0} 10%{opacity:.55} 90%{opacity:.25} 100%{transform:translateY(-130px) translateX(var(--drift-x,0px));opacity:0} }
+@keyframes colon-pulse { 0%,44%{opacity:1} 50%,94%{opacity:.15} 100%{opacity:1} }
+@keyframes widget-enter { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shard-pop { 0%{transform:scale(0) rotate(-20deg);opacity:0} 60%{transform:scale(1.25) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+@keyframes shard-shimmer { 0%,100%{filter:brightness(1) saturate(1)} 50%{filter:brightness(1.7) saturate(1.4) drop-shadow(0 0 8px var(--aether-shimmer))} }
+@keyframes rose-reveal { from{opacity:0;clip-path:inset(0 100% 0 0);letter-spacing:.35em} to{opacity:1;clip-path:inset(0 0% 0 0);letter-spacing:normal} }
+@keyframes ticker-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes portal-ripple { 0%{box-shadow:0 0 0 0 rgba(155,77,221,.45)} 100%{box-shadow:0 0 0 18px rgba(155,77,221,0)} }
+@keyframes focus-dim { from{opacity:1;filter:blur(0)} to{opacity:.12;filter:blur(1px)} }
+@keyframes oracle-pulse { 0%,80%,100%{transform:scale(.7);opacity:.35} 40%{transform:scale(1.1);opacity:1} }
+@keyframes toast-in { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes toast-out { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(8px)} }
+@keyframes sidebar-enter { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+@keyframes fade-in { from{opacity:0} to{opacity:1} }
+.void-orb { will-change:transform,opacity; animation:void-breath 8s ease-in-out infinite; }
+.void-orb:nth-child(2){animation-duration:11s;animation-delay:-3s}
+.void-orb:nth-child(3){animation-duration:14s;animation-delay:-7s}
+.void-particle{will-change:transform,opacity;animation:particle-drift var(--particle-duration,9s) ease-in infinite;animation-delay:var(--particle-delay,0s)}
+.clock-colon{animation:colon-pulse 1s step-end infinite}
+.widget{opacity:0}
+.widget:nth-child(1){animation:widget-enter .45s var(--ease-out) forwards .08s}
+.widget:nth-child(2){animation:widget-enter .45s var(--ease-out) forwards .18s}
+.widget:nth-child(3){animation:widget-enter .45s var(--ease-out) forwards .28s}
+.widget:nth-child(4){animation:widget-enter .45s var(--ease-out) forwards .38s}
+.widget:nth-child(5){animation:widget-enter .45s var(--ease-out) forwards .48s}
+.shard-earning{animation:shard-pop .5s var(--ease-bounce) forwards,shard-shimmer 1.2s ease-in-out .5s infinite}
+.rose-quote-text{animation:rose-reveal 1.2s var(--ease-out) forwards}
+.ticker-inner{display:flex;width:max-content;animation:ticker-scroll 70s linear infinite}
+.ticker-inner:hover{animation-play-state:paused}
+.portal-widget:active{animation:portal-ripple .5s ease forwards}
+.focus-mode .non-focus{animation:focus-dim .55s var(--ease-out) forwards;pointer-events:none}
+.focus-mode .focus-anchor{opacity:1;filter:none}
+.oracle-dot{animation:oracle-pulse 1.2s ease-in-out infinite}
+.oracle-dot:nth-child(2){animation-delay:.22s}
+.oracle-dot:nth-child(3){animation-delay:.44s}
+.toast{animation:toast-in .3s var(--ease-out) forwards}
+.toast.removing{animation:toast-out .25s var(--ease-out) forwards}
+.sidebar-content{animation:sidebar-enter .3s var(--ease-out) forwards}
+.fade-in{animation:fade-in .4s var(--ease-out) forwards}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><title>MIST Oracle</title>
+<link rel="stylesheet" href="../newtab/design-system.css" />
+<link rel="stylesheet" href="../newtab/animations.css" />
+<link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+<div id="panel-root">
+  <header id="panel-header">
+    <div id="panel-title"><span class="panel-sigil">⟐</span><span>MIST Oracle</span></div>
+    <div id="panel-status"><span id="status-dot"></span><span id="status-label">connecting...</span></div>
+  </header>
+  <div id="key-setup" class="panel-section hidden">
+    <p class="setup-label">Drop your key into the void</p>
+    <p class="setup-sub">Your API key is encrypted locally — never sent to any server.</p>
+    <div class="key-input-group">
+      <input id="api-key-input" type="password" placeholder="sk-... or AIza..." autocomplete="off" />
+      <select id="provider-select"><option value="gemini">Gemini (free)</option><option value="openai">OpenAI</option><option value="groq">Groq (free)</option></select>
+    </div>
+    <div class="key-passphrase-group">
+      <input id="passphrase-input" type="password" placeholder="Vault passphrase (you choose)" autocomplete="new-password" />
+      <p class="setup-hint">You'll enter this once per browser session to unlock the vault.</p>
+    </div>
+    <button id="save-key-btn" class="aether-btn primary">Seal into vault ✦</button>
+  </div>
+  <div id="vault-unlock" class="panel-section hidden">
+    <p class="setup-label">The vault is sealed</p>
+    <input id="unlock-passphrase" type="password" placeholder="Enter vault passphrase" autocomplete="current-password" />
+    <button id="unlock-btn" class="aether-btn primary">Unlock</button>
+    <p id="unlock-error" class="error-text hidden">Wrong passphrase. Try again.</p>
+  </div>
+  <div id="chat-area" class="hidden">
+    <div id="messages" role="log" aria-live="polite"></div>
+    <div id="oracle-thinking" class="hidden"><span class="oracle-dot"></span><span class="oracle-dot"></span><span class="oracle-dot"></span></div>
+    <div id="chat-input-area">
+      <textarea id="chat-input" placeholder="Ask the void…" rows="2" maxlength="2000"></textarea>
+      <button id="send-btn" class="aether-btn primary">↑</button>
+    </div>
+    <div id="chat-footer">
+      <span id="provider-badge"></span>
+      <button id="clear-chat-btn" class="footer-btn">clear</button>
+      <button id="reset-key-btn" class="footer-btn">reset key</button>
+    </div>
+  </div>
+</div>
+<script src="panel.js" type="module"></script>
+</body></html>
