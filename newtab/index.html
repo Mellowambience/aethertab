@@ -4,121 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AetherTab</title>
-  <link rel="stylesheet" href="design-system.css" />
-  <link rel="stylesheet" href="animations.css" />
-  <link rel="stylesheet" href="newtab.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css">
+  <link rel="stylesheet" href="newtab.css">
+  <link rel="stylesheet" href="animations.css">
+  <link rel="stylesheet" href="library-search.css">
 </head>
 <body>
 
-<!-- Background FX layer -->
-<div id="bg-layer" aria-hidden="true">
-  <div class="void-orb void-orb-1"></div>
-  <div class="void-orb void-orb-2"></div>
-  <div class="void-orb void-orb-3"></div>
-  <div id="particle-field"></div>
-</div>
-
-<!-- Root layout -->
 <div id="aethertab-root">
 
-  <!-- Ticker Bar -->
-  <div id="ticker-bar" role="marquee" aria-label="AetherTab updates">
+  <!-- Background -->
+  <div id="bg-layer">
+    <div class="void-orb void-orb-1"></div>
+    <div class="void-orb void-orb-2"></div>
+    <div class="void-orb void-orb-3"></div>
+    <canvas id="particle-field"></canvas>
+  </div>
+
+  <!-- Ticker -->
+  <div id="ticker-bar">
     <span class="ticker-label">✦ VOID</span>
     <div class="ticker-track">
-      <div class="ticker-inner" id="ticker-inner">
-        <!-- Populated by ticker.js -->
-      </div>
+      <div class="ticker-inner" id="ticker-inner"></div>
     </div>
   </div>
 
-  <!-- Main -->
+  <!-- Sidebar toggle -->
+  <button id="sidebar-toggle" title="Open MIST Oracle">◈</button>
+
+  <!-- Main content -->
   <main id="main-content">
 
     <!-- Clock -->
-    <div id="clock-widget" class="widget" role="timer" aria-live="polite">
-      <div id="clock-time">00<span class="clock-colon">:</span>00</div>
-      <div id="clock-date"></div>
+    <div id="clock-widget">
+      <span id="clock-time">00:00</span>
+      <span id="clock-date"></span>
     </div>
 
-    <!-- Focus input -->
-    <div id="focus-widget" class="widget">
-      <div id="focus-input-wrap">
-        <span id="focus-label">Today's focus</span>
+    <!-- Aether Library Search (replaces focus input) -->
+    <div id="library-widget">
+      <div id="library-label">Aether Library</div>
+      <div id="library-input-wrap">
+        <span id="library-search-icon">✦</span>
         <input
-          id="focus-input"
+          id="library-input"
           type="text"
-          placeholder="What are you building?"
-          maxlength="80"
+          placeholder="search sigils, archetypes, projects…"
           autocomplete="off"
           spellcheck="false"
         />
+      </div>
+      <div id="library-filters">
+        <button class="lib-filter-btn active" data-filter="all">All</button>
+        <button class="lib-filter-btn" data-filter="codex">Codex</button>
+        <button class="lib-filter-btn" data-filter="archetype">Archetypes</button>
+        <button class="lib-filter-btn" data-filter="sigil">Sigils</button>
+        <button class="lib-filter-btn" data-filter="codexscript">CodexScript</button>
+        <button class="lib-filter-btn" data-filter="project">Projects</button>
+        <button class="lib-filter-btn" data-filter="system">Systems</button>
+      </div>
+      <!-- Results (absolutely positioned below input) -->
+      <div id="library-results"></div>
+      <div id="library-empty">
+        <span id="library-empty-text">Nothing found in the void.</span>
       </div>
     </div>
 
     <!-- Widget row -->
     <div id="widget-row">
-
       <!-- Weather -->
-      <div id="weather-widget" class="widget aether-card void-glow" role="status" aria-label="Weather">
+      <div class="widget-card" id="weather-widget">
         <span id="weather-icon">🌙</span>
-        <span id="weather-temp">—</span>
-        <span id="weather-cond">loading...</span>
+        <span id="weather-temp"></span>
+        <span id="weather-cond">— add key in ⚙️</span>
       </div>
-
       <!-- Pomodoro -->
-      <div id="pomodoro-widget" class="widget aether-card void-glow">
+      <div class="widget-card" id="pomodoro-widget">
         <span id="pomodoro-mode">FOCUS</span>
         <span id="pomodoro-display">25:00</span>
-        <button id="pomodoro-btn" class="aether-btn" aria-label="Start timer">▶</button>
+        <button id="pomodoro-btn">▶</button>
       </div>
-
-      <!-- Void Shards -->
-      <div id="shard-counter" class="widget aether-card void-glow" title="Void Shards earned">
-        <span class="shard-icon" aria-hidden="true"></span>
+      <!-- Shards -->
+      <div class="widget-card" id="shard-counter">
+        <span class="shard-icon"></span>
         <span id="shard-count">0</span>
-        <span style="font-size: var(--text-xs); color: var(--text-muted);">shards</span>
+        <span style="font-size:var(--text-xs);color:var(--text-muted)">shards</span>
       </div>
-
     </div>
 
   </main>
 
-  <!-- AetherRose Quote -->
-  <div id="quote-area" class="widget" aria-live="polite">
-    <p id="quote-text"></p>
-    <p id="quote-attr">— AetherRose</p>
+  <!-- AetherRose quote -->
+  <div id="quote-area">
+    <div id="quote-text"></div>
+    <div id="quote-attr">— AetherRose</div>
   </div>
 
   <!-- Footer -->
   <footer id="footer-bar">
-    <a id="kofi-cta" href="https://ko-fi.com/mellowambience" target="_blank" rel="noopener">
-      <span class="kofi-moon">☽</span>
-      <span>Keep the void lit</span>
+    <a id="kofi-cta" href="https://ko-fi.com/1Aether1Rose1" target="_blank" rel="noopener">
+      <span>♥️</span> Ko-fi
     </a>
     <div id="footer-actions">
-      <button class="footer-btn" id="focus-toggle-btn" title="Toggle focus mode">◎ Focus</button>
-      <button class="footer-btn" id="theme-btn" title="Themes & Shards">◈ Shards</button>
-      <button class="footer-btn" id="settings-btn" title="Settings">⚙</button>
+      <button class="footer-btn" id="theme-btn">◈ Theme</button>
+      <button class="footer-btn" id="focus-toggle-btn">◎ Focus</button>
+      <button class="footer-btn" id="settings-btn">⚙️</button>
     </div>
   </footer>
 
 </div>
 
-<!-- Sidebar toggle -->
-<button id="sidebar-toggle" title="Open MIST Oracle" aria-label="Open AI sidebar">⟐</button>
+<!-- Toast -->
+<div id="toast-container"></div>
 
-<!-- Toast container -->
-<div id="toast-container" role="status" aria-live="polite"></div>
-
-<!-- Scripts -->
-<script src="components/particles.js" type="module"></script>
-<script src="components/clock.js" type="module"></script>
-<script src="components/ticker.js" type="module"></script>
-<script src="components/weather.js" type="module"></script>
-<script src="components/quote.js" type="module"></script>
-<script src="components/pomodoro.js" type="module"></script>
-<script src="components/focus.js" type="module"></script>
-<script src="newtab.js" type="module"></script>
+<script type="module" src="newtab.js"></script>
+<script type="module">
+  import { initLibrarySearch } from './components/library-search.js';
+  initLibrarySearch();
+</script>
 
 </body>
 </html>
