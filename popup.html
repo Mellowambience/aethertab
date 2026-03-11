@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherTab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 360px;
+      min-height: 480px;
+      background: #0d0d14;
+      color: #e8e0f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #1e1a2e;
+    }
+    .header-icon {
+      width: 22px; height: 22px;
+      background: #7c3aed;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+    .header-title { font-size: 13px; font-weight: 600; color: #c4b5fd; letter-spacing: 0.03em; }
+    .header-subtitle { font-size: 11px; color: #6b5e85; margin-left: auto; }
+
+    .panel { padding: 20px 18px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    #screen-signin { display: flex; }
+    #screen-main   { display: none; }
+    #screen-loading { display: none; }
+
+    .brand-area { text-align: center; padding: 24px 0 8px; }
+    .brand-glyph { font-size: 42px; line-height: 1; margin-bottom: 8px; }
+    .brand-name { font-size: 22px; font-weight: 700; color: #c4b5fd; letter-spacing: 0.04em; }
+    .brand-tagline { font-size: 12px; color: #6b5e85; margin-top: 4px; }
+
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px 16px;
+      background: #fff; color: #3c4043;
+      border: 1px solid #dadce0; border-radius: 8px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      margin-top: 8px;
+    }
+    .btn-google:hover { background: #f8f8f8; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+    .btn-google svg { flex-shrink: 0; }
+
+    .privacy-note { font-size: 11px; color: #4a4060; text-align: center; line-height: 1.5; }
+
+    #screen-loading { align-items: center; justify-content: center; gap: 12px; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #2d1f4e; border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .user-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; background: #12101e; border-radius: 8px;
+    }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #3b2d5a; }
+    .user-avatar-fallback {
+      width: 28px; height: 28px; border-radius: 50%; background: #3b1f7a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #c4b5fd; font-weight: 700;
+    }
+    .user-name { font-size: 13px; font-weight: 500; color: #d4c8f0; flex: 1; }
+    .btn-signout {
+      background: none; border: none; color: #4a4060; font-size: 11px;
+      cursor: pointer; padding: 4px 6px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-signout:hover { color: #c4b5fd; background: #1e1a2e; }
+
+    .oracle-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b5e85; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .status-dot.offline { background: #6b5e85; box-shadow: none; }
+
+    .chat-output {
+      flex: 1; background: #0a0912; border-radius: 8px; padding: 12px;
+      overflow-y: auto; min-height: 180px; max-height: 220px;
+      font-size: 13px; line-height: 1.6; color: #c4b5fd;
+      border: 1px solid #1e1a2e;
+    }
+    .chat-output .msg { margin-bottom: 10px; }
+    .chat-output .msg.user { color: #e8e0f0; text-align: right; }
+    .chat-output .msg.user span {
+      background: #3b1f7a; padding: 6px 10px;
+      border-radius: 10px 10px 2px 10px; display: inline-block;
+    }
+    .chat-output .msg.oracle span {
+      background: #12101e; padding: 6px 10px;
+      border-radius: 10px 10px 10px 2px; display: inline-block;
+      border: 1px solid #1e1a2e;
+    }
+    .chat-output .placeholder { color: #3a3050; font-style: italic; }
+
+    .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    .chat-input {
+      flex: 1; background: #12101e; border: 1px solid #2d1f4e;
+      border-radius: 8px; color: #e8e0f0; font-size: 13px;
+      padding: 9px 12px; resize: none; outline: none;
+      min-height: 38px; max-height: 100px; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .chat-input:focus { border-color: #7c3aed; }
+    .chat-input::placeholder { color: #3a3050; }
+
+    .btn-send {
+      width: 36px; height: 36px; background: #7c3aed;
+      border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-send:hover { background: #6d28d9; }
+    .btn-send:active { transform: scale(0.92); }
+    .btn-send svg { color: white; }
+
+    .footer-row { display: flex; justify-content: flex-end; }
+    .btn-clear {
+      background: none; border: 1px solid #1e1a2e; color: #4a4060;
+      font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-clear:hover { color: #c4b5fd; border-color: #3b2d5a; }
+
+    .error-bar {
+      background: #2d0f0f; color: #f87171;
+      border: 1px solid #5a1a1a; border-radius: 6px;
+      padding: 8px 12px; font-size: 12px; display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">✦</div>
+    <span class="header-title">AetherTab</span>
+    <span class="header-subtitle" id="header-status">❇ MIST Oracle</span>
+  </div>
+
+  <!-- Sign In -->
+  <div class="panel" id="screen-signin">
+    <div class="brand-area">
+      <div class="brand-glyph">🌹</div>
+      <div class="brand-name">MIST Oracle</div>
+      <div class="brand-tagline">Your AI companion. Sign in to begin.</div>
+    </div>
+    <button class="btn-google" id="btn-google-signin">
+      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 6.293C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+    <p class="privacy-note">
+      Your identity is used only to personalize MIST.<br/>
+      API keys are managed automatically — no setup needed.
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div class="panel" id="screen-loading">
+    <div class="spinner"></div>
+    <span style="color:#6b5e85;font-size:13px;">Awakening the void…</span>
+  </div>
+
+  <!-- Main -->
+  <div class="panel" id="screen-main">
+    <div class="user-bar">
+      <img class="user-avatar" id="user-avatar" src="" alt="" style="display:none"/>
+      <div class="user-avatar-fallback" id="user-avatar-fallback"></div>
+      <span class="user-name" id="user-name">Loading…</span>
+      <button class="btn-signout" id="btn-signout">Sign out</button>
+    </div>
+    <div class="oracle-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Oracle connected</span>
+    </div>
+    <div class="error-bar" id="error-bar"></div>
+    <div class="chat-output" id="chat-output">
+      <div class="placeholder">Ask the void…</div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input" placeholder="Ask the void…" rows="1"></textarea>
+      <button class="btn-send" id="btn-send" title="Send">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+      </button>
+    </div>
+    <div class="footer-row">
+      <button class="btn-clear" id="btn-clear">clear</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
