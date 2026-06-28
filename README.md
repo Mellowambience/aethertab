@@ -2,7 +2,7 @@
 
 > *"The extension is the distribution layer. The empire is what it opens into."*
 
-AetherTab is a magical new-tab workspace with a Gemini BYOK AI companion, a local HTML6 mini-game arcade, and a security-first cartridge roadmap.
+AetherTab is a magical new-tab workspace with a Gemini BYOK AI companion, a local HTML6 mini-game arcade, and privacy-first cartridge security.
 
 The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab-owned API key is bundled in the extension.
 
@@ -13,15 +13,16 @@ The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab
 3. Enable **Developer mode**.
 4. Click **Load unpacked** → select this `aethertab/` folder.
 5. Open a new tab or click the extension icon.
-6. Use the AetherTab Home menu to open MIST Oracle, HTML6 Arcade, or Settings.
+6. Use the AetherTab Home menu to open MIST Oracle, HTML6 Arcade, Security Log, or Settings.
 7. For MIST, paste your own Gemini API key in Settings.
-8. For HTML6 Arcade, launch **Void Pong** from the arcade screen.
+8. For HTML6 Arcade, launch **Void Pong**, **Shard Catcher**, or **Rose Runner** from the arcade screen.
 
 ## Current Product Areas
 
 - **AetherTab Home:** Main navigation for the suite.
 - **MIST Oracle:** Optional BYOK Gemini assistant.
 - **HTML6 Arcade:** Local break-time mini-game suite.
+- **Security Log:** Local CartridgeGuard events. Nothing uploads automatically.
 - **Settings:** Gemini provider configuration and local data controls.
 
 ## First-Run Setup
@@ -41,6 +42,8 @@ Current arcade milestone:
 - Local Canvas-based runtime
 - Local cartridge metadata
 - Built-in **Void Pong** cartridge
+- Built-in **Shard Catcher** cartridge
+- Built-in **Rose Runner** cartridge
 - Start/stop lifecycle
 - Back-to-home flow
 - No remote cartridges
@@ -59,6 +62,8 @@ HTML6 docs live in [`docs/html6-game-suite.md`](docs/html6-game-suite.md).
 | AI output rendering | Raw `innerHTML` | `textContent` / DOM node creation |
 | OAuth | Hidden token flow | Removed from current BYOK build |
 | Arcade code | Remote game scripts | Built-in local cartridges only |
+| Cartridge safety | Blindly load game metadata | CartridgeGuard validates before loading |
+| Security reporting | Hidden telemetry | Local user-visible Security Log |
 | Analytics / telemetry | Often embedded | None by default |
 
 ## Current Permissions
@@ -88,6 +93,10 @@ Possible advanced option later:
 
 Provider docs live in [`docs/ai-provider-strategy.md`](docs/ai-provider-strategy.md).
 
+## Production Convergence
+
+See [`docs/production-convergence-plan.md`](docs/production-convergence-plan.md).
+
 ## Privacy
 
 See [`docs/privacy-policy-draft.md`](docs/privacy-policy-draft.md).
@@ -95,8 +104,8 @@ See [`docs/privacy-policy-draft.md`](docs/privacy-policy-draft.md).
 ## Roadmap
 
 - **v0.2** — Gemini BYOK setup, provider wrapper, minimal permissions
-- **v0.3** — AetherTab Home, HTML6 Arcade MVP, Void Pong
-- **v0.4** — CartridgeGuard, local security log, additional built-in games
+- **v0.3** — AetherTab Home, HTML6 Arcade MVP, three built-in games
+- **v0.4** — CartridgeGuard, local Security Log, QA polish
 - **v0.5** — Groq fallback provider, PixiJS renderer experiment, screenshots
 - **v1.0** — Chrome Web Store submission
 
