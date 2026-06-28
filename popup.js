@@ -2,6 +2,7 @@
 
 import { sendMistMessage, testMistConnection } from './providers/mist-provider.js';
 import { GameRuntime } from './html6/runtime/game-runtime.js';
+import { getSecurityEvents, clearSecurityEvents } from './html6/security/security-events.js';
 
 const STORAGE_KEYS = ['mistSettings', 'history'];
 const DEFAULT_SETTINGS = {
@@ -15,17 +16,20 @@ const screens = {
   home: document.getElementById('screen-home'),
   setup: document.getElementById('screen-setup'),
   oracle: document.getElementById('screen-main'),
-  arcade: document.getElementById('screen-arcade')
+  arcade: document.getElementById('screen-arcade'),
+  security: document.getElementById('screen-security')
 };
 
 const headerStatus = document.getElementById('header-status');
 
 const btnOpenOracle = document.getElementById('btn-open-oracle');
 const btnOpenArcade = document.getElementById('btn-open-arcade');
+const btnOpenSecurity = document.getElementById('btn-open-security');
 const btnOpenSettings = document.getElementById('btn-open-settings');
 const btnSetupHome = document.getElementById('btn-setup-home');
 const btnOracleHome = document.getElementById('btn-oracle-home');
 const btnArcadeHome = document.getElementById('btn-arcade-home');
+const btnSecurityHome = document.getElementById('btn-security-home');
 
 const providerSelect = document.getElementById('provider-select');
 const modelInput = document.getElementById('model-input');
@@ -47,8 +51,12 @@ const errorBar = document.getElementById('error-bar');
 
 const arcadeStage = document.getElementById('arcade-stage');
 const arcadeStatus = document.getElementById('arcade-status');
-const btnPlayVoidPong = document.getElementById('btn-play-void-pong');
+const cartridgeCards = Array.from(document.querySelectorAll('[data-cartridge]'));
 const btnStopGame = document.getElementById('btn-stop-game');
+
+const securityLogOutput = document.getElementById('security-log-output');
+const btnRefreshSecurityLog = document.getElementById('btn-refresh-security-log');
+const btnClearSecurityLog = document.getElementById('btn-clear-security-log');
 
 let chatHistory = [];
 let mistSettings = { ...DEFAULT_SETTINGS };
@@ -72,18 +80,19 @@ btnOpenOracle.addEventListener('click', () => {
   showScreen('oracle');
 });
 
-btnOpenArcade.addEventListener('click', () => {
-  showScreen('arcade');
+btnOpenArcade.addEventListener('click', () => showScreen('arcade'));
+
+btnOpenSecurity.addEventListener('click', async () => {
+  await renderSecurityLog();
+  showScreen('security');
 });
 
 btnOpenSettings.addEventListener('click', openSettings);
 btnSettings.addEventListener('click', openSettings);
 btnSetupHome.addEventListener('click', () => showScreen('home'));
 btnOracleHome.addEventListener('click', () => showScreen('home'));
-btnArcadeHome.addEventListener('click', () => {
-  stopArcadeGame();
-  showScreen('home');
-});
+btnArcadeHome.addEventListener('click', () => showScreen('home'));
+btnSecurityHome.addEventListener('click', () => showScreen('home'));
 
 btnSaveSettings.addEventListener('click', async () => {
   hideSetupMessages();
@@ -118,6 +127,8 @@ btnTestSettings.addEventListener('click', async () => {
     } else {
       showSetupError(result.message || 'Gemini connection failed.');
     }
+  } catch (err) {
+    showSetupError(err?.message || 'Gemini connection failed.');
   } finally {
     btnTestSettings.disabled = false;
     btnTestSettings.textContent = 'Test connection';
@@ -152,11 +163,20 @@ btnClear.addEventListener('click', async () => {
   renderHistory();
 });
 
-btnPlayVoidPong.addEventListener('click', async () => {
-  await startArcadeGame('html6/cartridges/void-pong.json');
-});
+for (const card of cartridgeCards) {
+  card.addEventListener('click', async () => {
+    const cartridgePath = card.dataset.cartridge;
+    await startArcadeGame(cartridgePath);
+  });
+}
 
 btnStopGame.addEventListener('click', stopArcadeGame);
+
+btnRefreshSecurityLog.addEventListener('click', renderSecurityLog);
+btnClearSecurityLog.addEventListener('click', async () => {
+  await clearSecurityEvents();
+  await renderSecurityLog();
+});
 
 function openSettings() {
   hydrateSettingsForm();
@@ -210,17 +230,25 @@ async function startArcadeGame(cartridgePath) {
       arcadeRuntime = new GameRuntime({ mount: arcadeStage, statusEl: arcadeStatus });
     }
     arcadeStatus.textContent = 'Loading cartridge…';
+    setCartridgeCardsDisabled(true);
     await arcadeRuntime.loadCartridge(cartridgePath);
   } catch (err) {
     arcadeStatus.textContent = err?.message || 'Could not start cartridge.';
     arcadeStage.replaceChildren(makePlaceholder('Cartridge blocked or failed to load.'));
+    await renderSecurityLog(false);
+  } finally {
+    setCartridgeCardsDisabled(false);
   }
 }
 
 function stopArcadeGame() {
   arcadeRuntime?.stop();
   arcadeStage.replaceChildren(makePlaceholder('Choose a cartridge to begin.'));
-  arcadeStatus.textContent = 'Local cartridge runtime ready.';
+  arcadeStatus.textContent = 'Choose a local cartridge.';
+}
+
+function setCartridgeCardsDisabled(disabled) {
+  for (const card of cartridgeCards) card.disabled = disabled;
 }
 
 function makePlaceholder(text) {
@@ -278,6 +306,36 @@ function appendMessage(role, text) {
   return wrapper;
 }
 
+async function renderSecurityLog() {
+  clearElement(securityLogOutput);
+  const events = await getSecurityEvents();
+
+  if (!events.length) {
+    securityLogOutput.appendChild(makePlaceholder('No local security events yet.'));
+    return;
+  }
+
+  for (const event of events) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+
+    const type = document.createElement('div');
+    type.className = 'section-title';
+    type.textContent = event.type || 'security_event';
+
+    const reason = document.createElement('div');
+    reason.className = 'log-reason';
+    reason.textContent = event.reason || 'No reason recorded.';
+
+    const meta = document.createElement('div');
+    meta.className = 'muted';
+    meta.textContent = `${event.timestamp || 'unknown time'}${event.cartridgePath ? ` · ${event.cartridgePath}` : ''}`;
+
+    entry.append(type, reason, meta);
+    securityLogOutput.appendChild(entry);
+  }
+}
+
 function clearElement(element) {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
@@ -294,7 +352,8 @@ function showScreen(name) {
     home: 'Home',
     setup: 'Settings',
     oracle: 'MIST Oracle',
-    arcade: 'HTML6 Arcade'
+    arcade: 'HTML6 Arcade',
+    security: 'Security Log'
   };
   headerStatus.textContent = `❇ ${labels[name] || 'AetherTab'}`;
 
