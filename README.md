@@ -2,7 +2,7 @@
 
 > *"The extension is the distribution layer. The empire is what it opens into."*
 
-AetherTab is a Chrome extension that replaces your new tab with a lore-driven, focused workspace and an optional **MIST Oracle** AI companion.
+AetherTab is a magical new-tab workspace with a Gemini BYOK AI companion, a local HTML6 mini-game arcade, and a security-first cartridge roadmap.
 
 The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab-owned API key is bundled in the extension.
 
@@ -13,8 +13,16 @@ The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab
 3. Enable **Developer mode**.
 4. Click **Load unpacked** → select this `aethertab/` folder.
 5. Open a new tab or click the extension icon.
-6. Paste your own Gemini API key into the MIST setup screen.
-7. Test the connection, save, and ask the void.
+6. Use the AetherTab Home menu to open MIST Oracle, HTML6 Arcade, or Settings.
+7. For MIST, paste your own Gemini API key in Settings.
+8. For HTML6 Arcade, launch **Void Pong** from the arcade screen.
+
+## Current Product Areas
+
+- **AetherTab Home:** Main navigation for the suite.
+- **MIST Oracle:** Optional BYOK Gemini assistant.
+- **HTML6 Arcade:** Local break-time mini-game suite.
+- **Settings:** Gemini provider configuration and local data controls.
 
 ## First-Run Setup
 
@@ -22,6 +30,24 @@ The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab
 - **API key:** Bring your own Gemini API key. It is stored locally with Chrome extension storage.
 - **Model:** Defaults to `gemini-1.5-flash-latest`. Change it if your Gemini account uses another supported model.
 - **Privacy note:** Do not paste sensitive personal information into free-tier AI providers.
+- **Arcade:** HTML6 Arcade does not require an AI key for built-in local games.
+
+## HTML6 Arcade MVP
+
+HTML6 is a product/lore name, not a literal new browser standard.
+
+Current arcade milestone:
+
+- Local Canvas-based runtime
+- Local cartridge metadata
+- Built-in **Void Pong** cartridge
+- Start/stop lifecycle
+- Back-to-home flow
+- No remote cartridges
+- No marketplace
+- No extra permissions
+
+HTML6 docs live in [`docs/html6-game-suite.md`](docs/html6-game-suite.md).
 
 ## Security Architecture
 
@@ -32,6 +58,7 @@ The current build uses a **Gemini-first bring-your-own-key setup**. No AetherTab
 | Host permissions | `<all_urls>` broad | Explicit provider allowlist only |
 | AI output rendering | Raw `innerHTML` | `textContent` / DOM node creation |
 | OAuth | Hidden token flow | Removed from current BYOK build |
+| Arcade code | Remote game scripts | Built-in local cartridges only |
 | Analytics / telemetry | Often embedded | None by default |
 
 ## Current Permissions
@@ -61,12 +88,16 @@ Possible advanced option later:
 
 Provider docs live in [`docs/ai-provider-strategy.md`](docs/ai-provider-strategy.md).
 
+## Privacy
+
+See [`docs/privacy-policy-draft.md`](docs/privacy-policy-draft.md).
+
 ## Roadmap
 
 - **v0.2** — Gemini BYOK setup, provider wrapper, minimal permissions
-- **v0.3** — Theme gallery, Shard unlock screen, encrypted notes
-- **v0.4** — Groq fallback provider, settings polish, screenshots
-- **v0.5** — Enterprise consulting CTA, Ko-fi passive drops
+- **v0.3** — AetherTab Home, HTML6 Arcade MVP, Void Pong
+- **v0.4** — CartridgeGuard, local security log, additional built-in games
+- **v0.5** — Groq fallback provider, PixiJS renderer experiment, screenshots
 - **v1.0** — Chrome Web Store submission
 
 ## Release Readiness
