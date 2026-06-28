@@ -8,31 +8,34 @@ AetherTab should ship as a trustworthy, minimal-permission Chrome new-tab/focus 
 
 ## 2. Current Release Blockers
 
-- [ ] Resolve README/manifest mismatch around permissions.
-- [ ] Decide whether the AI flow uses Google OAuth or user-provided provider keys.
-- [ ] Remove or justify `identity` permission.
-- [ ] Remove or justify `tabs` permission.
-- [ ] Remove placeholder OAuth client ID before submission.
-- [ ] Confirm no secrets or private endpoints are committed.
-- [ ] Confirm all user/model-generated text is rendered safely.
+- [ ] Run the local QA checklist in [`docs/local-qa.md`](local-qa.md).
+- [ ] Verify a real Gemini API key can connect.
+- [ ] Confirm no manifest errors in Chrome Developer Mode.
 - [ ] Add a privacy policy.
+- [ ] Prepare Chrome Web Store screenshots and listing copy.
+- [ ] Decide whether passphrase-based key encryption is required before public release.
 
 ## 3. Permissions Review
 
-For each permission in `manifest.json`, document:
+Current intended manifest direction:
 
 | Permission | Needed? | Why | Can it be removed? |
 |---|---:|---|---:|
 | `storage` | Yes | Saves user settings/history locally. | No |
-| `identity` | TBD | Only needed for Chrome OAuth flow. | Yes, if using local provider keys |
-| `tabs` | TBD | Avoid unless a feature genuinely needs tab access. | Probably |
 
-For each host permission, document:
+Current intended host permissions:
 
 | Host | Needed? | Why |
 |---|---:|---|
-| `https://generativelanguage.googleapis.com/*` | TBD | Gemini API calls if Gemini is supported. |
-| `https://www.googleapis.com/*` | TBD | User profile/OAuth only if Google sign-in remains. |
+| `https://generativelanguage.googleapis.com/*` | Yes | Gemini BYOK provider requests. |
+
+Avoid:
+
+- `<all_urls>`
+- `identity`
+- `tabs`
+- `webRequest`
+- broad host permissions
 
 ## 4. Privacy Policy Requirements
 
@@ -52,6 +55,7 @@ Recommended posture:
 - No selling user data.
 - Local settings storage only.
 - AI requests sent only when the user explicitly asks the AI feature something.
+- User brings their own AI provider key.
 
 ## 5. Store Listing Assets
 
@@ -77,30 +81,32 @@ A lore-rich new tab workspace for focus rituals, ambient productivity, and optio
 
 AetherTab replaces your new tab with a focused, magical workspace designed for calm productivity. It combines a lore-driven interface with practical tools like local settings, ambient focus cues, and optional AI assistance.
 
-AetherTab is built around a minimal-permission security posture. It avoids broad browsing access and stores user configuration locally. AI features are optional and should be configured transparently by the user.
+AetherTab uses a bring-your-own-key AI setup. The extension does not ship with a bundled AI provider key. User configuration is stored locally in Chrome extension storage, and AI requests are sent only when the user explicitly uses the MIST Oracle feature.
 
 ## 8. Local QA Checklist
 
-Before submission:
+Before submission, complete [`docs/local-qa.md`](local-qa.md).
 
-- [ ] Open `chrome://extensions`.
-- [ ] Enable Developer Mode.
-- [ ] Load the unpacked extension folder.
-- [ ] Confirm no manifest errors.
-- [ ] Open a new tab.
-- [ ] Confirm UI loads.
-- [ ] Test AI setup flow.
-- [ ] Test failed/missing API key state.
-- [ ] Test clear history/settings.
-- [ ] Test reload extension.
-- [ ] Confirm no console errors during normal use.
-- [ ] Confirm README instructions are accurate.
+Minimum pass requirements:
+
+- [ ] Extension loads unpacked without manifest errors.
+- [ ] New tab override opens AetherTab.
+- [ ] Missing key state works.
+- [ ] Invalid key state works.
+- [ ] Valid Gemini key test works.
+- [ ] MIST chat response works.
+- [ ] Clear chat works.
+- [ ] Clear key works.
+- [ ] No uncaught console errors during normal use.
+- [ ] README instructions are accurate.
 
 ## 9. Security QA Checklist
 
 - [ ] No secrets committed.
 - [ ] No broad host permissions.
 - [ ] No `<all_urls>`.
+- [ ] No `identity` unless OAuth is intentionally reintroduced.
+- [ ] No `tabs` unless a future feature genuinely needs it.
 - [ ] No raw `innerHTML` for AI output.
 - [ ] CSP remains strict.
 - [ ] Permissions are explained in README.
@@ -108,4 +114,4 @@ Before submission:
 
 ## 10. Release Recommendation
 
-Do not submit to the Chrome Web Store until Issue #1 is resolved: the README and `manifest.json` must agree on the extension's permission model.
+Do not submit to the Chrome Web Store until local QA passes with a real Gemini API key and the privacy policy is published.
