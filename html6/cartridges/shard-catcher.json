@@ -1,0 +1,16 @@
+{
+  "html6Version": "0.1",
+  "id": "shard-catcher",
+  "title": "Shard Catcher",
+  "author": "AetherTab",
+  "description": "Catch falling void shards before the timer fades.",
+  "renderer": "canvas",
+  "screen": {
+    "width": 160,
+    "height": 144,
+    "scale": 3
+  },
+  "palette": ["#0d0d14", "#7c3aed", "#c4b5fd", "#e8e0f0", "#f87171"],
+  "entry": "html6/games/shard-catcher.js",
+  "controls": ["ArrowLeft", "ArrowRight", "A", "D"]
+}
