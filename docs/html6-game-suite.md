@@ -52,6 +52,12 @@ Use the spirit of:
 
 Do not emulate Game Boy hardware or use Nintendo branding.
 
+### PixiJS
+
+Use PixiJS later as an optional renderer for smoother 2D visuals, sprites, particles, texture atlases, filters, and polished arcade menus.
+
+Do not make PixiJS required for the first MVP. The first HTML6 Arcade should run on plain Canvas so it stays tiny, secure, and easy to debug inside a Chrome extension.
+
 ## MVP Name Options
 
 - HTML6 Arcade
@@ -92,6 +98,7 @@ MVP does not include:
 - Online cartridge execution
 - Monetization
 - Full game editor
+- PixiJS dependency
 
 ## Built-In Starter Games
 
@@ -141,6 +148,7 @@ Example:
   "title": "Void Pong",
   "author": "AetherTab",
   "description": "Bounce the void orb and keep your focus alive.",
+  "renderer": "canvas",
   "screen": {
     "width": 160,
     "height": 144,
@@ -151,6 +159,11 @@ Example:
   "controls": ["Arrow keys", "Space"]
 }
 ```
+
+Renderer values:
+
+- `canvas` — default for MVP
+- `pixi` — later optional renderer after Canvas runtime works
 
 ## Suggested File Structure
 
@@ -163,7 +176,9 @@ html6/
   runtime/
     game-runtime.js
     input.js
-    canvas-screen.js
+    renderers/
+      canvas-renderer.js
+      pixi-renderer.js       # later, optional
   games/
     void-pong.js
     shard-catcher.js
@@ -179,6 +194,7 @@ The runtime should:
 - Create a Canvas element
 - Load a local cartridge
 - Import the local game module
+- Select a renderer from cartridge metadata
 - Provide input state
 - Run `update(dt)` and `draw(ctx)` loop
 - Stop cleanly when leaving the game
@@ -198,6 +214,35 @@ export function createGame(runtime) {
 }
 ```
 
+## Renderer Strategy
+
+### Phase 3: CanvasRenderer
+
+The first renderer should use plain Canvas 2D.
+
+Use it for:
+
+- Void Pong
+- Shard Catcher
+- Rose Runner
+- Debug overlays
+- Simple pixel-art-like drawing
+
+### Phase 3.5: PixiRenderer
+
+Add PixiJS only after the Canvas arcade works.
+
+Use it for:
+
+- Sprite-heavy games
+- Particles
+- Glow effects
+- Cartridge preview animations
+- More polished game library transitions
+- Higher-end mini-game templates
+
+Important: do not load PixiJS from a remote CDN inside the extension. If PixiJS is added, bundle or vendor it locally and review CSP/security impact.
+
 ## Security Rules
 
 - Built-in local games only for MVP.
@@ -207,6 +252,7 @@ export function createGame(runtime) {
 - Do not add network sharing yet.
 - Do not weaken CSP.
 - Do not let game modules access AI keys directly.
+- Do not use remote CDN scripts for PixiJS.
 
 ## Future Studio Mode
 
