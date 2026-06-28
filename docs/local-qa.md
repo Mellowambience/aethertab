@@ -1,6 +1,6 @@
 # AetherTab Local QA Checklist
 
-Use this checklist to verify the Gemini BYOK build and HTML6 Arcade MVP in Chrome.
+Use this checklist to verify the Gemini BYOK build, HTML6 Arcade, and Security Log in Chrome.
 
 ## What this verifies
 
@@ -9,7 +9,9 @@ Use this checklist to verify the Gemini BYOK build and HTML6 Arcade MVP in Chrom
 - AetherTab Home appears as the main navigation.
 - MIST Oracle can be configured with a user-provided Gemini API key.
 - Chat requests go through the provider wrapper.
-- HTML6 Arcade can launch and stop Void Pong.
+- HTML6 Arcade can launch and stop three built-in cartridges.
+- CartridgeGuard blocks unsafe cartridge metadata before loading.
+- The local Security Log screen renders user-visible events.
 - Chat history and settings persist locally.
 - Clearing the key returns MIST to setup mode.
 
@@ -34,6 +36,7 @@ Use this checklist to verify the Gemini BYOK build and HTML6 Arcade MVP in Chrom
 3. Confirm these cards/buttons appear:
    - MIST Oracle
    - HTML6 Arcade
+   - Security Log
    - Settings
 
 ## MIST Setup Test
@@ -57,14 +60,28 @@ Use this checklist to verify the Gemini BYOK build and HTML6 Arcade MVP in Chrom
 ## HTML6 Arcade Test
 
 1. From Home, click **HTML6 Arcade**.
-2. Click **Play Void Pong**.
+2. Launch **Void Pong**.
 3. Expected: a pixel-style canvas game appears.
 4. Move the paddle with `W/S` or `ArrowUp/ArrowDown`.
 5. Confirm the score changes when the ball hits the paddle.
 6. Click **Stop game**.
-7. Expected: the canvas is removed and the placeholder returns.
-8. Click **Home**.
-9. Expected: the game stops and AetherTab Home appears.
+7. Launch **Shard Catcher**.
+8. Move with `A/D` or `ArrowLeft/ArrowRight` and catch shards.
+9. Click **Stop game**.
+10. Launch **Rose Runner**.
+11. Switch lanes with `A/D` or `ArrowLeft/ArrowRight`.
+12. Click **Stop game**.
+13. Click **Home**.
+14. Expected: the game stops and AetherTab Home appears.
+
+## Security Log Test
+
+1. From Home, click **Security Log**.
+2. Expected: the local log screen appears.
+3. If there are no events, it should say there are no local security events.
+4. Click **Refresh**.
+5. Click **Clear log**.
+6. Expected: log clears without network activity.
 
 ## Persistence Test
 
@@ -110,6 +127,8 @@ Use this checklist to verify the Gemini BYOK build and HTML6 Arcade MVP in Chrom
 - [ ] No API key is committed to the repo.
 - [ ] AI output is inserted with DOM/text APIs, not raw model-output `innerHTML`.
 - [ ] HTML6 Arcade runs built-in local cartridge entries only.
+- [ ] CartridgeGuard rejects remote or unsafe cartridge entry paths.
+- [ ] Security events stay local and user-visible.
 - [ ] README current permissions match `manifest.json`.
 
 ## Known Limitation
@@ -124,7 +143,8 @@ The build passes local QA when:
 - Home navigation works.
 - The setup screen handles missing/invalid/valid Gemini keys properly.
 - A real Gemini request succeeds.
-- HTML6 Arcade launches and stops Void Pong.
+- HTML6 Arcade launches and stops all three built-in cartridges.
+- Security Log displays and clears local events.
 - Chat history persists.
 - Clearing key and chat works.
 - No uncaught console errors appear during normal use.
