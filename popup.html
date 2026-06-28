@@ -6,11 +6,10 @@
   <title>AetherTab</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      width: min(100vw, 760px);
+      width: min(100vw, 820px);
       min-width: 360px;
-      min-height: 560px;
+      min-height: 580px;
       margin: 0 auto;
       background: radial-gradient(circle at top, #1b1230 0%, #0d0d14 52%, #07070d 100%);
       color: #e8e0f0;
@@ -19,73 +18,50 @@
       display: flex;
       flex-direction: column;
     }
-
     .header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       padding: 14px 16px 10px;
       border-bottom: 1px solid #1e1a2e;
       background: rgba(10, 9, 18, 0.78);
       backdrop-filter: blur(10px);
     }
     .header-icon {
-      width: 22px; height: 22px;
-      background: #7c3aed;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px;
+      width: 22px; height: 22px; background: #7c3aed; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 10px;
       box-shadow: 0 0 18px rgba(124, 58, 237, 0.45);
     }
     .header-title { font-size: 13px; font-weight: 700; color: #c4b5fd; letter-spacing: 0.04em; }
     .header-subtitle { font-size: 11px; color: #8b7bb0; margin-left: auto; }
-
     .panel { padding: 20px 18px; flex: 1; display: none; flex-direction: column; gap: 16px; }
-    #screen-loading { display: flex; }
-
+    #screen-loading { display: flex; align-items: center; justify-content: center; gap: 12px; }
     .brand-area { text-align: center; padding: 18px 0 8px; }
     .brand-glyph { font-size: 46px; line-height: 1; margin-bottom: 8px; }
     .brand-name { font-size: 24px; font-weight: 800; color: #c4b5fd; letter-spacing: 0.04em; }
     .brand-tagline { font-size: 12px; color: #8b7bb0; margin-top: 5px; line-height: 1.5; }
-
-    .card, .menu-card {
+    .card, .menu-card, .cartridge-card {
       background: rgba(12, 10, 22, 0.78);
       border: 1px solid #241d39;
       border-radius: 14px;
       padding: 14px;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
     }
-
-    .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-    .menu-card { text-align: left; color: #e8e0f0; min-height: 128px; }
-    .menu-card:hover { border-color: #7c3aed; background: rgba(22, 17, 38, 0.9); }
+    .menu-grid, .cartridge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+    .menu-card, .cartridge-card { text-align: left; color: #e8e0f0; min-height: 128px; }
+    .menu-card:hover, .cartridge-card:hover { border-color: #7c3aed; background: rgba(22, 17, 38, 0.9); }
     .menu-card-icon { font-size: 24px; margin-bottom: 8px; }
-    .menu-card-title { color: #c4b5fd; font-weight: 800; margin-bottom: 6px; }
-    .menu-card-copy { color: #8b7bb0; font-size: 12px; line-height: 1.45; }
-
+    .menu-card-title, .section-title { color: #c4b5fd; font-weight: 800; margin-bottom: 6px; }
+    .menu-card-copy, .muted { color: #8b7bb0; font-size: 12px; line-height: 1.45; }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
     label { color: #c4b5fd; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
     input, select, textarea {
-      background: #12101e;
-      border: 1px solid #2d1f4e;
-      border-radius: 8px;
-      color: #e8e0f0;
-      font: inherit;
-      outline: none;
-      padding: 10px 12px;
+      background: #12101e; border: 1px solid #2d1f4e; border-radius: 8px;
+      color: #e8e0f0; font: inherit; outline: none; padding: 10px 12px;
     }
     textarea { resize: none; min-height: 38px; max-height: 120px; }
     input:focus, select:focus, textarea:focus { border-color: #7c3aed; }
     .help-text { color: #756992; font-size: 11px; line-height: 1.45; }
-
     .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    button {
-      border: 0;
-      border-radius: 8px;
-      cursor: pointer;
-      font: inherit;
-      transition: transform 0.1s, background 0.15s, border-color 0.15s;
-    }
+    button { border: 0; border-radius: 8px; cursor: pointer; font: inherit; transition: transform 0.1s, background 0.15s, border-color 0.15s; }
     button:active { transform: scale(0.98); }
     button:disabled { cursor: not-allowed; opacity: 0.58; }
     .btn-primary { background: #7c3aed; color: white; padding: 10px 14px; font-weight: 700; }
@@ -93,78 +69,41 @@
     .btn-secondary { background: #171326; color: #c4b5fd; border: 1px solid #2d1f4e; padding: 10px 14px; }
     .btn-secondary:hover { border-color: #4c3780; }
     .btn-danger { background: #2d0f0f; color: #fca5a5; border: 1px solid #5a1a1a; padding: 10px 14px; }
-
-    #screen-loading { align-items: center; justify-content: center; gap: 12px; }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid #2d1f4e; border-top-color: #7c3aed;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+    .spinner { width: 28px; height: 28px; border: 3px solid #2d1f4e; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .oracle-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8b7bb0; }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
     .status-dot.offline { background: #6b5e85; box-shadow: none; }
-
-    .chat-output {
-      flex: 1;
-      background: rgba(10, 9, 18, 0.88);
-      border-radius: 12px;
-      padding: 12px;
-      overflow-y: auto;
-      min-height: 220px;
-      max-height: 420px;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #c4b5fd;
-      border: 1px solid #1e1a2e;
+    .chat-output, .log-output {
+      flex: 1; background: rgba(10, 9, 18, 0.88); border-radius: 12px; padding: 12px;
+      overflow-y: auto; min-height: 220px; max-height: 420px; font-size: 13px; line-height: 1.6;
+      color: #c4b5fd; border: 1px solid #1e1a2e;
     }
     .chat-output .msg { margin-bottom: 10px; }
     .chat-output .msg.user { color: #e8e0f0; text-align: right; }
-    .chat-output .msg span {
-      padding: 7px 10px;
-      border-radius: 10px;
-      display: inline-block;
-      max-width: 92%;
-      white-space: pre-wrap;
-    }
+    .chat-output .msg span { padding: 7px 10px; border-radius: 10px; display: inline-block; max-width: 92%; white-space: pre-wrap; }
     .chat-output .msg.user span { background: #3b1f7a; border-bottom-right-radius: 3px; }
     .chat-output .msg.oracle span { background: #12101e; border: 1px solid #1e1a2e; border-bottom-left-radius: 3px; }
     .placeholder { color: #4f4568; font-style: italic; }
-
     .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
     .chat-input { flex: 1; }
-    .btn-send {
-      width: 40px; height: 40px; background: #7c3aed;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
+    .btn-send { width: 40px; height: 40px; background: #7c3aed; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .btn-send:hover { background: #6d28d9; }
     .btn-send svg { color: white; }
-
     .footer-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .error-bar, .success-bar {
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 12px;
-      display: none;
-      line-height: 1.45;
-    }
+    .error-bar, .success-bar { border-radius: 8px; padding: 9px 12px; font-size: 12px; display: none; line-height: 1.45; }
     .error-bar { background: #2d0f0f; color: #fca5a5; border: 1px solid #5a1a1a; }
     .success-bar { background: #0f2d1a; color: #86efac; border: 1px solid #1d6b3a; }
-
     .arcade-shell { display: grid; gap: 12px; }
     .arcade-stage {
-      display: grid;
-      place-items: center;
-      min-height: 450px;
-      background: rgba(5, 5, 10, 0.55);
-      border: 1px solid #241d39;
-      border-radius: 16px;
-      padding: 16px;
-      overflow: hidden;
+      display: grid; place-items: center; min-height: 450px;
+      background: rgba(5, 5, 10, 0.55); border: 1px solid #241d39;
+      border-radius: 16px; padding: 16px; overflow: hidden;
     }
     .arcade-status { color: #8b7bb0; font-size: 12px; line-height: 1.4; }
+    .log-entry { border-bottom: 1px solid #241d39; padding: 8px 0; }
+    .log-entry:last-child { border-bottom: 0; }
+    .log-reason { color: #fca5a5; }
   </style>
 </head>
 <body>
@@ -194,7 +133,12 @@
       <button class="menu-card" id="btn-open-arcade">
         <div class="menu-card-icon">🕹️</div>
         <div class="menu-card-title">HTML6 Arcade</div>
-        <div class="menu-card-copy">Play local break-time cartridges. First playable: Void Pong.</div>
+        <div class="menu-card-copy">Play three local break-time cartridges with no extra permissions.</div>
+      </button>
+      <button class="menu-card" id="btn-open-security">
+        <div class="menu-card-icon">🛡️</div>
+        <div class="menu-card-title">Security Log</div>
+        <div class="menu-card-copy">Review local CartridgeGuard events. Nothing uploads automatically.</div>
       </button>
       <button class="menu-card" id="btn-open-settings">
         <div class="menu-card-icon">⚙️</div>
@@ -210,13 +154,10 @@
       <div class="brand-name">MIST Oracle</div>
       <div class="brand-tagline">Bring your own Gemini key. Keep the extension small, local, and yours.</div>
     </div>
-
     <div class="card">
       <div class="field">
         <label for="provider-select">Provider</label>
-        <select id="provider-select">
-          <option value="gemini">Gemini</option>
-        </select>
+        <select id="provider-select"><option value="gemini">Gemini</option></select>
       </div>
       <div class="field">
         <label for="model-input">Model</label>
@@ -240,10 +181,7 @@
 
   <div class="panel" id="screen-main">
     <div class="footer-row">
-      <div class="oracle-status">
-        <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Oracle configured</span>
-      </div>
+      <div class="oracle-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Oracle configured</span></div>
       <button class="btn-secondary" id="btn-oracle-home">Home</button>
     </div>
     <div class="error-bar" id="error-bar"></div>
@@ -251,38 +189,38 @@
     <div class="chat-input-row">
       <textarea class="chat-input" id="chat-input" placeholder="Ask the void…" rows="1"></textarea>
       <button class="btn-send" id="btn-send" title="Send">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="19" x2="12" y2="5"></line>
-          <polyline points="5 12 12 5 19 12"></polyline>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
       </button>
     </div>
     <div class="footer-row">
-      <div class="button-row">
-        <button class="btn-secondary" id="btn-settings">Settings</button>
-        <button class="btn-secondary" id="btn-clear">Clear chat</button>
-      </div>
+      <div class="button-row"><button class="btn-secondary" id="btn-settings">Settings</button><button class="btn-secondary" id="btn-clear">Clear chat</button></div>
       <button class="btn-danger" id="btn-clear-settings">Clear key</button>
     </div>
   </div>
 
   <div class="panel" id="screen-arcade">
     <div class="footer-row">
-      <div>
-        <div class="menu-card-title">HTML6 Arcade</div>
-        <div class="arcade-status" id="arcade-status">Local cartridge runtime ready.</div>
-      </div>
+      <div><div class="section-title">HTML6 Arcade</div><div class="arcade-status" id="arcade-status">Choose a local cartridge.</div></div>
       <button class="btn-secondary" id="btn-arcade-home">Home</button>
     </div>
-    <div class="arcade-shell">
-      <div class="button-row">
-        <button class="btn-primary" id="btn-play-void-pong">Play Void Pong</button>
-        <button class="btn-secondary" id="btn-stop-game">Stop game</button>
-      </div>
-      <div class="arcade-stage" id="arcade-stage">
-        <div class="placeholder">Choose a cartridge to begin.</div>
-      </div>
+    <div class="cartridge-grid">
+      <button class="cartridge-card" data-cartridge="html6/cartridges/void-pong.json"><div class="menu-card-icon">🟣</div><div class="menu-card-title">Void Pong</div><div class="menu-card-copy">A tiny paddle game about keeping the void orb alive.</div></button>
+      <button class="cartridge-card" data-cartridge="html6/cartridges/shard-catcher.json"><div class="menu-card-icon">💎</div><div class="menu-card-title">Shard Catcher</div><div class="menu-card-copy">Catch good shards, avoid cursed ones, beat the timer.</div></button>
+      <button class="cartridge-card" data-cartridge="html6/cartridges/rose-runner.json"><div class="menu-card-icon">🌹</div><div class="menu-card-title">Rose Runner</div><div class="menu-card-copy">Switch lanes, dodge thorns, and collect roses.</div></button>
     </div>
+    <div class="arcade-shell">
+      <div class="button-row"><button class="btn-secondary" id="btn-stop-game">Stop game</button></div>
+      <div class="arcade-stage" id="arcade-stage"><div class="placeholder">Choose a cartridge to begin.</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="screen-security">
+    <div class="footer-row">
+      <div><div class="section-title">Security Log</div><div class="muted">Local CartridgeGuard events. Nothing is uploaded automatically.</div></div>
+      <button class="btn-secondary" id="btn-security-home">Home</button>
+    </div>
+    <div class="log-output" id="security-log-output"></div>
+    <div class="button-row"><button class="btn-secondary" id="btn-refresh-security-log">Refresh</button><button class="btn-danger" id="btn-clear-security-log">Clear log</button></div>
   </div>
 
   <script type="module" src="popup.js"></script>
