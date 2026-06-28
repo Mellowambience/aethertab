@@ -1,6 +1,7 @@
-// popup.js — AetherTab MIST Oracle BYOK flow
+// popup.js — AetherTab Home + MIST Oracle + HTML6 Arcade
 
 import { sendMistMessage, testMistConnection } from './providers/mist-provider.js';
+import { GameRuntime } from './html6/runtime/game-runtime.js';
 
 const STORAGE_KEYS = ['mistSettings', 'history'];
 const DEFAULT_SETTINGS = {
@@ -9,9 +10,22 @@ const DEFAULT_SETTINGS = {
   apiKey: ''
 };
 
-const screenSetup = document.getElementById('screen-setup');
-const screenLoading = document.getElementById('screen-loading');
-const screenMain = document.getElementById('screen-main');
+const screens = {
+  loading: document.getElementById('screen-loading'),
+  home: document.getElementById('screen-home'),
+  setup: document.getElementById('screen-setup'),
+  oracle: document.getElementById('screen-main'),
+  arcade: document.getElementById('screen-arcade')
+};
+
+const headerStatus = document.getElementById('header-status');
+
+const btnOpenOracle = document.getElementById('btn-open-oracle');
+const btnOpenArcade = document.getElementById('btn-open-arcade');
+const btnOpenSettings = document.getElementById('btn-open-settings');
+const btnSetupHome = document.getElementById('btn-setup-home');
+const btnOracleHome = document.getElementById('btn-oracle-home');
+const btnArcadeHome = document.getElementById('btn-arcade-home');
 
 const providerSelect = document.getElementById('provider-select');
 const modelInput = document.getElementById('model-input');
@@ -31,8 +45,14 @@ const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const errorBar = document.getElementById('error-bar');
 
+const arcadeStage = document.getElementById('arcade-stage');
+const arcadeStatus = document.getElementById('arcade-status');
+const btnPlayVoidPong = document.getElementById('btn-play-void-pong');
+const btnStopGame = document.getElementById('btn-stop-game');
+
 let chatHistory = [];
 let mistSettings = { ...DEFAULT_SETTINGS };
+let arcadeRuntime = null;
 
 init();
 
@@ -42,15 +62,28 @@ async function init() {
   chatHistory = Array.isArray(stored.history) ? stored.history : [];
   mistSettings = { ...DEFAULT_SETTINGS, ...(stored.mistSettings || {}) };
   hydrateSettingsForm();
-
-  if (mistSettings.apiKey) {
-    renderHistory();
-    setStatus(true, 'Gemini configured');
-    showScreen('main');
-  } else {
-    showScreen('setup');
-  }
+  renderHistory();
+  setStatus(Boolean(mistSettings.apiKey), mistSettings.apiKey ? 'Gemini configured' : 'Gemini key not set');
+  showScreen('home');
 }
+
+btnOpenOracle.addEventListener('click', () => {
+  renderHistory();
+  showScreen('oracle');
+});
+
+btnOpenArcade.addEventListener('click', () => {
+  showScreen('arcade');
+});
+
+btnOpenSettings.addEventListener('click', openSettings);
+btnSettings.addEventListener('click', openSettings);
+btnSetupHome.addEventListener('click', () => showScreen('home'));
+btnOracleHome.addEventListener('click', () => showScreen('home'));
+btnArcadeHome.addEventListener('click', () => {
+  stopArcadeGame();
+  showScreen('home');
+});
 
 btnSaveSettings.addEventListener('click', async () => {
   hideSetupMessages();
@@ -63,8 +96,7 @@ btnSaveSettings.addEventListener('click', async () => {
 
   await saveSettings(settings);
   setStatus(true, 'Gemini configured');
-  renderHistory();
-  showScreen('main');
+  showScreen('home');
 });
 
 btnTestSettings.addEventListener('click', async () => {
@@ -92,18 +124,11 @@ btnTestSettings.addEventListener('click', async () => {
   }
 });
 
-btnSettings.addEventListener('click', () => {
-  hydrateSettingsForm();
-  hideSetupMessages();
-  showScreen('setup');
-});
-
 btnClearSettings.addEventListener('click', async () => {
   await chrome.storage.local.remove('mistSettings');
   mistSettings = { ...DEFAULT_SETTINGS };
   hydrateSettingsForm();
-  chatHistory = [];
-  await chrome.storage.local.set({ history: [] });
+  setStatus(false, 'Gemini key not set');
   showScreen('setup');
 });
 
@@ -126,6 +151,18 @@ btnClear.addEventListener('click', async () => {
   await chrome.storage.local.set({ history: [] });
   renderHistory();
 });
+
+btnPlayVoidPong.addEventListener('click', async () => {
+  await startArcadeGame('html6/cartridges/void-pong.json');
+});
+
+btnStopGame.addEventListener('click', stopArcadeGame);
+
+function openSettings() {
+  hydrateSettingsForm();
+  hideSetupMessages();
+  showScreen('setup');
+}
 
 async function sendMessage() {
   const text = chatInput.value.trim();
@@ -167,6 +204,32 @@ async function sendMessage() {
   }
 }
 
+async function startArcadeGame(cartridgePath) {
+  try {
+    if (!arcadeRuntime) {
+      arcadeRuntime = new GameRuntime({ mount: arcadeStage, statusEl: arcadeStatus });
+    }
+    arcadeStatus.textContent = 'Loading cartridge…';
+    await arcadeRuntime.loadCartridge(cartridgePath);
+  } catch (err) {
+    arcadeStatus.textContent = err?.message || 'Could not start cartridge.';
+    arcadeStage.replaceChildren(makePlaceholder('Cartridge blocked or failed to load.'));
+  }
+}
+
+function stopArcadeGame() {
+  arcadeRuntime?.stop();
+  arcadeStage.replaceChildren(makePlaceholder('Choose a cartridge to begin.'));
+  arcadeStatus.textContent = 'Local cartridge runtime ready.';
+}
+
+function makePlaceholder(text) {
+  const placeholder = document.createElement('div');
+  placeholder.className = 'placeholder';
+  placeholder.textContent = text;
+  return placeholder;
+}
+
 function hydrateSettingsForm() {
   providerSelect.value = mistSettings.provider || DEFAULT_SETTINGS.provider;
   modelInput.value = mistSettings.model || DEFAULT_SETTINGS.model;
@@ -190,10 +253,7 @@ function renderHistory() {
   clearElement(chatOutput);
 
   if (!chatHistory.length) {
-    const placeholder = document.createElement('div');
-    placeholder.className = 'placeholder';
-    placeholder.textContent = 'Ask the void…';
-    chatOutput.appendChild(placeholder);
+    chatOutput.appendChild(makePlaceholder('Ask the void…'));
     return;
   }
 
@@ -225,9 +285,22 @@ function clearElement(element) {
 }
 
 function showScreen(name) {
-  screenLoading.style.display = name === 'loading' ? 'flex' : 'none';
-  screenSetup.style.display = name === 'setup' ? 'flex' : 'none';
-  screenMain.style.display = name === 'main' ? 'flex' : 'none';
+  for (const [screenName, element] of Object.entries(screens)) {
+    element.style.display = screenName === name ? 'flex' : 'none';
+  }
+
+  const labels = {
+    loading: 'Awakening',
+    home: 'Home',
+    setup: 'Settings',
+    oracle: 'MIST Oracle',
+    arcade: 'HTML6 Arcade'
+  };
+  headerStatus.textContent = `❇ ${labels[name] || 'AetherTab'}`;
+
+  if (name !== 'arcade') {
+    stopArcadeGame();
+  }
 }
 
 function setStatus(online, text) {
