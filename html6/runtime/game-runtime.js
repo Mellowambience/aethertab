@@ -2,8 +2,8 @@
 
 import { InputState } from './input.js';
 import { CanvasRenderer } from './renderers/canvas-renderer.js';
-
-const ALLOWED_RENDERERS = new Set(['canvas']);
+import { validateCartridge, CartridgeGuardError } from '../security/cartridge-guard.js';
+import { recordSecurityEvent } from '../security/security-events.js';
 
 export class GameRuntime {
   constructor({ mount, statusEl }) {
@@ -15,39 +15,52 @@ export class GameRuntime {
     this.animationFrame = null;
     this.lastTime = 0;
     this.running = false;
+    this.currentCartridge = null;
   }
 
   async loadCartridge(cartridgePath) {
     this.stop();
-    const cartridge = await this.fetchCartridge(cartridgePath);
-    this.validateCartridge(cartridge);
 
-    const renderer = new CanvasRenderer({
-      mount: this.mount,
-      screen: cartridge.screen,
-      palette: cartridge.palette || []
-    });
-    renderer.mountCanvas();
-    this.renderer = renderer;
+    try {
+      const cartridge = await this.fetchCartridge(cartridgePath);
+      validateCartridge(cartridge);
+      this.currentCartridge = cartridge;
 
-    const module = await import(chrome.runtime.getURL(cartridge.entry));
-    this.game = module.createGame({
-      cartridge,
-      input: this.input,
-      renderer,
-      screen: cartridge.screen,
-      palette: cartridge.palette || []
-    });
+      const renderer = new CanvasRenderer({
+        mount: this.mount,
+        screen: cartridge.screen,
+        palette: cartridge.palette || []
+      });
+      renderer.mountCanvas();
+      this.renderer = renderer;
 
-    if (this.statusEl) {
-      this.statusEl.textContent = `${cartridge.title} loaded — ${cartridge.controls?.join(', ') || 'keyboard'}`;
+      const moduleUrl = chrome.runtime.getURL(cartridge.entry);
+      const module = await import(moduleUrl);
+      if (typeof module.createGame !== 'function') {
+        throw new Error('Cartridge module does not export createGame(runtime).');
+      }
+
+      this.game = module.createGame({
+        cartridge,
+        input: this.input,
+        renderer,
+        screen: cartridge.screen,
+        palette: cartridge.palette || []
+      });
+
+      if (this.statusEl) {
+        this.statusEl.textContent = `${cartridge.title} loaded — ${cartridge.controls?.join(', ') || 'keyboard'}`;
+      }
+
+      this.game.init?.();
+      this.input.start();
+      this.running = true;
+      this.lastTime = performance.now();
+      this.animationFrame = requestAnimationFrame((time) => this.loop(time));
+    } catch (err) {
+      await this.handleLoadError(err, cartridgePath);
+      throw err;
     }
-
-    this.game.init?.();
-    this.input.start();
-    this.running = true;
-    this.lastTime = performance.now();
-    this.animationFrame = requestAnimationFrame((time) => this.loop(time));
   }
 
   async fetchCartridge(cartridgePath) {
@@ -56,16 +69,16 @@ export class GameRuntime {
     return response.json();
   }
 
-  validateCartridge(cartridge) {
-    if (!cartridge || typeof cartridge !== 'object') throw new Error('Invalid cartridge.');
-    if (!cartridge.id || !cartridge.title || !cartridge.entry) throw new Error('Cartridge is missing required fields.');
-    if (!ALLOWED_RENDERERS.has(cartridge.renderer)) throw new Error(`Renderer not allowed yet: ${cartridge.renderer}`);
-    if (/^(https?:|javascript:|data:|chrome:|file:)/i.test(cartridge.entry)) {
-      throw new Error('Remote or unsafe cartridge entry paths are blocked.');
+  async handleLoadError(err, cartridgePath) {
+    if (err instanceof CartridgeGuardError) {
+      await recordSecurityEvent({
+        type: 'cartridge_blocked',
+        cartridgePath,
+        reason: err.message,
+        details: err.details || {}
+      });
     }
-    if (!cartridge.entry.startsWith('html6/games/')) {
-      throw new Error('Cartridge entry must point to a built-in HTML6 game module.');
-    }
+    this.stop();
   }
 
   loop(time) {
@@ -90,5 +103,6 @@ export class GameRuntime {
     this.game = null;
     this.renderer?.destroy?.();
     this.renderer = null;
+    this.currentCartridge = null;
   }
 }
