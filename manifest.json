@@ -1,28 +1,19 @@
 {
   "manifest_version": 3,
   "name": "AetherTab",
-  "version": "2.0.0",
-  "description": "MIST Oracle — your AI companion from the void",
+  "version": "2.1.0",
+  "description": "MIST Oracle — a secure BYOK AI companion from the void",
   "permissions": [
-    "identity",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
-    "https://www.googleapis.com/*",
     "https://generativelanguage.googleapis.com/*"
   ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; frame-src https://open.spotify.com; object-src 'self'"
+  "chrome_url_overrides": {
+    "newtab": "popup.html"
   },
-  "oauth2": {
-    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
-    "scopes": [
-      "openid",
-      "email",
-      "profile",
-      "https://www.googleapis.com/auth/generative-language.retriever"
-    ]
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "action": {
     "default_popup": "popup.html",
