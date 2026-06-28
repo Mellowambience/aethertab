@@ -1,199 +1,125 @@
-// popup.js — AetherTab MIST Oracle
-// Google OAuth flow: sign in → get token → use Gemini API directly
-// Zero manual API key setup. Zero vault passphrase. Just Google.
+// popup.js — AetherTab MIST Oracle BYOK flow
 
-const GEMINI_MODEL = 'gemini-1.5-flash-latest';
-const GEMINI_API  = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
+import { sendMistMessage, testMistConnection } from './providers/mist-provider.js';
 
-const screenSignin  = document.getElementById('screen-signin');
+const STORAGE_KEYS = ['mistSettings', 'history'];
+const DEFAULT_SETTINGS = {
+  provider: 'gemini',
+  model: 'gemini-1.5-flash-latest',
+  apiKey: ''
+};
+
+const screenSetup = document.getElementById('screen-setup');
 const screenLoading = document.getElementById('screen-loading');
-const screenMain    = document.getElementById('screen-main');
-const btnGoogle     = document.getElementById('btn-google-signin');
-const btnSignout    = document.getElementById('btn-signout');
-const btnSend       = document.getElementById('btn-send');
-const btnClear      = document.getElementById('btn-clear');
-const chatInput     = document.getElementById('chat-input');
-const chatOutput    = document.getElementById('chat-output');
-const userNameEl    = document.getElementById('user-name');
-const userAvatarEl  = document.getElementById('user-avatar');
-const userAvatarFB  = document.getElementById('user-avatar-fallback');
-const statusDot     = document.getElementById('status-dot');
-const statusText    = document.getElementById('status-text');
-const errorBar      = document.getElementById('error-bar');
+const screenMain = document.getElementById('screen-main');
+
+const providerSelect = document.getElementById('provider-select');
+const modelInput = document.getElementById('model-input');
+const apiKeyInput = document.getElementById('api-key-input');
+const btnSaveSettings = document.getElementById('btn-save-settings');
+const btnTestSettings = document.getElementById('btn-test-settings');
+const setupError = document.getElementById('setup-error');
+const setupSuccess = document.getElementById('setup-success');
+
+const btnSend = document.getElementById('btn-send');
+const btnClear = document.getElementById('btn-clear');
+const btnSettings = document.getElementById('btn-settings');
+const btnClearSettings = document.getElementById('btn-clear-settings');
+const chatInput = document.getElementById('chat-input');
+const chatOutput = document.getElementById('chat-output');
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const errorBar = document.getElementById('error-bar');
 
 let chatHistory = [];
+let mistSettings = { ...DEFAULT_SETTINGS };
+
+init();
 
 async function init() {
   showScreen('loading');
   const stored = await getStored();
-  if (stored.token && stored.user) {
-    await activateSession(stored.token, stored.user, stored.history || []);
+  chatHistory = Array.isArray(stored.history) ? stored.history : [];
+  mistSettings = { ...DEFAULT_SETTINGS, ...(stored.mistSettings || {}) };
+  hydrateSettingsForm();
+
+  if (mistSettings.apiKey) {
+    renderHistory();
+    setStatus(true, 'Gemini configured');
+    showScreen('main');
   } else {
-    showScreen('signin');
+    showScreen('setup');
   }
 }
 
-btnGoogle.addEventListener('click', async () => {
-  showScreen('loading');
-  try {
-    const token = await getAuthToken(true);
-    const user  = await fetchUserInfo(token);
-    await chrome.storage.local.set({ token, user, history: [] });
-    await activateSession(token, user, []);
-  } catch (err) {
-    console.error('Auth failed:', err);
-    showScreen('signin');
-  }
-});
+btnSaveSettings.addEventListener('click', async () => {
+  hideSetupMessages();
+  const settings = readSettingsForm();
 
-btnSignout.addEventListener('click', async () => {
-  const { token } = await getStored();
-  if (token) {
-    await chrome.identity.removeCachedAuthToken({ token });
-    fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token).catch(() => {});
-  }
-  await chrome.storage.local.clear();
-  chatHistory = [];
-  showScreen('signin');
-});
-
-function getAuthToken(interactive) {
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive }, (token) => {
-      if (chrome.runtime.lastError || !token) {
-        reject(chrome.runtime.lastError || new Error('No token'));
-      } else {
-        resolve(token);
-      }
-    });
-  });
-}
-
-async function fetchUserInfo(token) {
-  const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  if (!res.ok) throw new Error('Failed to fetch user info');
-  return res.json();
-}
-
-async function activateSession(token, user, history) {
-  chatHistory = history;
-  userNameEl.textContent = user.given_name || user.name || user.email;
-  if (user.picture) {
-    userAvatarEl.src = user.picture;
-    userAvatarEl.style.display = 'block';
-    userAvatarFB.style.display = 'none';
-  } else {
-    userAvatarFB.textContent = (user.name || user.email || '?').slice(0, 2).toUpperCase();
-  }
-  const ok = await testGemini(token);
-  setStatus(ok, ok ? 'Oracle connected' : 'Oracle offline — check connection');
-  renderHistory();
-  showScreen('main');
-}
-
-btnSend.addEventListener('click', sendMessage);
-chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-});
-chatInput.addEventListener('input', () => {
-  chatInput.style.height = 'auto';
-  chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
-});
-
-async function sendMessage() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-  chatInput.value = '';
-  chatInput.style.height = 'auto';
-  hideError();
-  chatHistory.push({ role: 'user', text });
-  appendMessage('user', text);
-  const loadingEl = appendMessage('oracle', '…');
-  btnSend.disabled = true;
-  try {
-    const { token } = await getStored();
-    const reply = await callGemini(token, chatHistory);
-    chatHistory.push({ role: 'model', text: reply });
-    loadingEl.querySelector('span').textContent = reply;
-    await chrome.storage.local.set({ history: chatHistory });
-  } catch (err) {
-    loadingEl.querySelector('span').textContent = '⚠ Oracle went quiet. Try again.';
-    showError(err.message);
-  } finally {
-    btnSend.disabled = false;
-    chatOutput.scrollTop = chatOutput.scrollHeight;
-  }
-}
-
-async function callGemini(token, history) {
-  const contents = history.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
-  const res = await fetch(GEMINI_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ contents })
-  });
-  if (res.status === 401) {
-    const newToken = await refreshToken();
-    await chrome.storage.local.set({ token: newToken });
-    return callGemini(newToken, history);
-  }
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err && err.error && err.error.message) || ('HTTP ' + res.status));
-  }
-  const data = await res.json();
-  return (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-    data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) || '(no response)';
-}
-
-async function testGemini(token) {
-  try { await callGemini(token, [{ role: 'user', text: 'ping' }]); return true; }
-  catch { return false; }
-}
-
-async function refreshToken() {
-  const { token: old } = await getStored();
-  if (old) await chrome.identity.removeCachedAuthToken({ token: old });
-  return getAuthToken(false);
-}
-
-function showScreen(name) {
-  screenSignin.style.display  = name === 'signin'  ? 'flex' : 'none';
-  screenLoading.style.display = name === 'loading' ? 'flex' : 'none';
-  screenMain.style.display    = name === 'main'    ? 'flex' : 'none';
-}
-
-function appendMessage(role, text) {
-  const ph = chatOutput.querySelector('.placeholder');
-  if (ph) ph.remove();
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  const span = document.createElement('span');
-  span.textContent = text;
-  div.appendChild(span);
-  chatOutput.appendChild(div);
-  chatOutput.scrollTop = chatOutput.scrollHeight;
-  return div;
-}
-
-function renderHistory() {
-  chatOutput.innerHTML = '';
-  if (!chatHistory.length) {
-    chatOutput.innerHTML = '<div class="placeholder">Ask the void…</div>';
+  if (!settings.apiKey) {
+    showSetupError('Paste your Gemini API key first.');
     return;
   }
-  for (const m of chatHistory) appendMessage(m.role === 'model' ? 'oracle' : 'user', m.text);
-}
 
-function setStatus(online, text) {
-  statusDot.className = 'status-dot' + (online ? '' : ' offline');
-  statusText.textContent = text;
-}
+  await saveSettings(settings);
+  setStatus(true, 'Gemini configured');
+  renderHistory();
+  showScreen('main');
+});
 
-function showError(msg) { errorBar.textContent = msg; errorBar.style.display = 'block'; }
-function hideError() { errorBar.style.display = 'none'; }
+btnTestSettings.addEventListener('click', async () => {
+  hideSetupMessages();
+  const settings = readSettingsForm();
+
+  if (!settings.apiKey) {
+    showSetupError('Paste your Gemini API key first.');
+    return;
+  }
+
+  btnTestSettings.disabled = true;
+  btnTestSettings.textContent = 'Testing…';
+
+  try {
+    const result = await testMistConnection(settings);
+    if (result.ok) {
+      showSetupSuccess(result.message || 'Gemini connected.');
+    } else {
+      showSetupError(result.message || 'Gemini connection failed.');
+    }
+  } finally {
+    btnTestSettings.disabled = false;
+    btnTestSettings.textContent = 'Test connection';
+  }
+});
+
+btnSettings.addEventListener('click', () => {
+  hydrateSettingsForm();
+  hideSetupMessages();
+  showScreen('setup');
+});
+
+btnClearSettings.addEventListener('click', async () => {
+  await chrome.storage.local.remove('mistSettings');
+  mistSettings = { ...DEFAULT_SETTINGS };
+  hydrateSettingsForm();
+  chatHistory = [];
+  await chrome.storage.local.set({ history: [] });
+  showScreen('setup');
+});
+
+btnSend.addEventListener('click', sendMessage);
+
+chatInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+});
 
 btnClear.addEventListener('click', async () => {
   chatHistory = [];
@@ -201,8 +127,140 @@ btnClear.addEventListener('click', async () => {
   renderHistory();
 });
 
-function getStored() {
-  return new Promise(resolve => chrome.storage.local.get(['token', 'user', 'history'], resolve));
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  if (!mistSettings.apiKey) {
+    showError('Add your Gemini API key in Settings first.');
+    showScreen('setup');
+    return;
+  }
+
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  hideError();
+
+  chatHistory.push({ role: 'user', text });
+  appendMessage('user', text);
+  const loadingEl = appendMessage('oracle', '…');
+  btnSend.disabled = true;
+
+  try {
+    const reply = await sendMistMessage({
+      messages: chatHistory,
+      settings: mistSettings
+    });
+
+    chatHistory.push({ role: 'model', text: reply });
+    loadingEl.querySelector('span').textContent = reply;
+    await chrome.storage.local.set({ history: chatHistory });
+    setStatus(true, 'Oracle connected');
+  } catch (err) {
+    const message = err?.message || 'MIST went quiet. Try again.';
+    loadingEl.querySelector('span').textContent = '⚠ Oracle went quiet. Try again.';
+    showError(message);
+    setStatus(false, 'Oracle offline');
+  } finally {
+    btnSend.disabled = false;
+    chatOutput.scrollTop = chatOutput.scrollHeight;
+  }
 }
 
-init();
+function hydrateSettingsForm() {
+  providerSelect.value = mistSettings.provider || DEFAULT_SETTINGS.provider;
+  modelInput.value = mistSettings.model || DEFAULT_SETTINGS.model;
+  apiKeyInput.value = mistSettings.apiKey || '';
+}
+
+function readSettingsForm() {
+  return {
+    provider: providerSelect.value || DEFAULT_SETTINGS.provider,
+    model: modelInput.value.trim() || DEFAULT_SETTINGS.model,
+    apiKey: apiKeyInput.value.trim()
+  };
+}
+
+async function saveSettings(settings) {
+  mistSettings = { ...DEFAULT_SETTINGS, ...settings };
+  await chrome.storage.local.set({ mistSettings });
+}
+
+function renderHistory() {
+  clearElement(chatOutput);
+
+  if (!chatHistory.length) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'placeholder';
+    placeholder.textContent = 'Ask the void…';
+    chatOutput.appendChild(placeholder);
+    return;
+  }
+
+  for (const message of chatHistory) {
+    appendMessage(message.role === 'model' ? 'oracle' : 'user', message.text);
+  }
+}
+
+function appendMessage(role, text) {
+  const placeholder = chatOutput.querySelector('.placeholder');
+  if (placeholder) placeholder.remove();
+
+  const wrapper = document.createElement('div');
+  wrapper.className = `msg ${role}`;
+
+  const bubble = document.createElement('span');
+  bubble.textContent = text;
+
+  wrapper.appendChild(bubble);
+  chatOutput.appendChild(wrapper);
+  chatOutput.scrollTop = chatOutput.scrollHeight;
+  return wrapper;
+}
+
+function clearElement(element) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+}
+
+function showScreen(name) {
+  screenLoading.style.display = name === 'loading' ? 'flex' : 'none';
+  screenSetup.style.display = name === 'setup' ? 'flex' : 'none';
+  screenMain.style.display = name === 'main' ? 'flex' : 'none';
+}
+
+function setStatus(online, text) {
+  statusDot.className = `status-dot${online ? '' : ' offline'}`;
+  statusText.textContent = text;
+}
+
+function showError(message) {
+  errorBar.textContent = message;
+  errorBar.style.display = 'block';
+}
+
+function hideError() {
+  errorBar.style.display = 'none';
+}
+
+function showSetupError(message) {
+  setupError.textContent = message;
+  setupError.style.display = 'block';
+  setupSuccess.style.display = 'none';
+}
+
+function showSetupSuccess(message) {
+  setupSuccess.textContent = message;
+  setupSuccess.style.display = 'block';
+  setupError.style.display = 'none';
+}
+
+function hideSetupMessages() {
+  setupError.style.display = 'none';
+  setupSuccess.style.display = 'none';
+}
+
+function getStored() {
+  return new Promise((resolve) => chrome.storage.local.get(STORAGE_KEYS, resolve));
+}
