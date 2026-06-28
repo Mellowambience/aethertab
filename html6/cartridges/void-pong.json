@@ -1,0 +1,16 @@
+{
+  "html6Version": "0.1",
+  "id": "void-pong",
+  "title": "Void Pong",
+  "author": "AetherTab",
+  "description": "Bounce the void orb and keep your focus alive.",
+  "renderer": "canvas",
+  "screen": {
+    "width": 160,
+    "height": 144,
+    "scale": 3
+  },
+  "palette": ["#0d0d14", "#7c3aed", "#c4b5fd", "#e8e0f0"],
+  "entry": "html6/games/void-pong.js",
+  "controls": ["ArrowUp", "ArrowDown", "W", "S", "Space"]
+}
